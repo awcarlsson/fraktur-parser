@@ -16,12 +16,9 @@ def extract_images_from_pdf(pdf_path):
         pages[page_number] = []
         print(f"📸 Extracting images from page {page_number + 1}/{len(doc)}...")
         page = doc[page_number]
-        for img_index, img in enumerate(page.get_images(full=True)):
-            xref = img[0]
-            base_image = doc.extract_image(xref)
-            image_bytes = base_image["image"]
-            image = Image.open(BytesIO(image_bytes))
-            pages[page_number].append(image)
+        pix = page.get_pixmap(dpi=300)
+        image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        pages[page_number].append(image)
     return pages
 
 def image_to_text_with_google(image):
