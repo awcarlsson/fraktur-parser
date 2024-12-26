@@ -36,7 +36,6 @@ def image_to_text_with_google(image):
     if response.error.message:
         raise Exception(f"Google Vision API error: {response.error.message}")
 
-    # Extract text
     return response.text_annotations[0].description if response.text_annotations else ""
 
 def translate_text_to_english(text, prompt):
