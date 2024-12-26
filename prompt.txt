@@ -8,3 +8,4 @@ If your input text is German, uppercase B, P, and V might be swapped. Decide whi
 The first few words might be the header of a section or include page numbers. If it seems like a header, translate it as a header and add a newline below it.
 The first sentence or phrase following a header might be the end of a sentence on a previous page, translate this exactly as it appears and don't try to paraphrase it into a sentence. 
 The last sentence might be the start of a complete sentence that continues onto a following page, also translate this exactly as it appears and don't try to paraphrase it into a complete sentence.
+Rarely, you may get a prompt with a sequence of random words with no sentence meaning to start. Ignore these random words and start translation where sentences appear.
