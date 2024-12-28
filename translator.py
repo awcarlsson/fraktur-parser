@@ -9,7 +9,7 @@ from openai import OpenAI
 
 openai_client = OpenAI()
 
-def extract_images_from_pdf(pdf_path):
+def extract_images(pdf_path):
     doc = fitz.open(pdf_path)
     pages = {}
     for page_number in range(len(doc)):
@@ -21,7 +21,7 @@ def extract_images_from_pdf(pdf_path):
         pages[page_number].append(image)
     return pages
 
-def image_to_text_with_google(image):
+def image_to_text(image):
     client = vision.ImageAnnotatorClient()
 
     buffered = BytesIO()
@@ -34,25 +34,31 @@ def image_to_text_with_google(image):
 
     response = client.text_detection(image=image, image_context=image_context)
     if response.error.message:
-        raise Exception(f"Google Vision API error: {response.error.message}")
-
+        print(f"Google Vision API error: {response.error.message}")
+    
     return response.text_annotations[0].description if response.text_annotations else ""
 
-def translate_text_to_english(text, prompt):
-    completion = openai_client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "system", 
-                "content": prompt
-            },
-            {
-                "role": "user",
-                "content": text
-            }
-        ]
-    )
-    return completion.choices[0].message.content
+def translate_text_llm(text, prompt):
+    try:
+        completion = openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system", 
+                    "content": prompt
+                },
+                {
+                    "role": "user",
+                    "content": text
+                }
+            ]
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        print(f"⚠️ OpenAI API error: {e}")
+        return "########################\n" \
+                + "OpenAI encountered an error here, check error log and ensure account has funding\n" \
+                + "########################\n" + text
 
 def save_to_word(translations, output_path):
     doc = Document()
@@ -67,15 +73,15 @@ def main(pdf_path, output_docx):
     prompt = ""
     with open(file_path, "r", encoding="utf-8") as file:
         prompt = file.read()
-    pages = extract_images_from_pdf(pdf_path)
+    pages = extract_images(pdf_path)
     translations = []
     for page_number in range(len(pages)):
         images = pages[page_number]
         print(f"📝 Translating page {page_number + 1}/{len(pages)}...")
         page_translation = ""
         for idx, image in enumerate(images):
-            extracted_text = image_to_text_with_google(image)
-            translated_text = translate_text_to_english(extracted_text, prompt)
+            extracted_text = image_to_text(image)
+            translated_text = translate_text_llm(extracted_text, prompt)
             if translated_text != "":
                 page_translation += translated_text + "\n"
         translations.append(page_translation)
