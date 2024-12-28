@@ -83,7 +83,7 @@ def main(pdf_path, output_docx):
             extracted_text = image_to_text(image)
             translated_text = translate_text_llm(extracted_text, prompt)
             if translated_text != "":
-                page_translation += translated_text + "\n"
+                page_translation += translated_text
         translations.append(page_translation)
     save_to_word(translations, output_docx)
     print(f"✅ Success! Translated document saved to {output_docx}")
