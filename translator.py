@@ -63,7 +63,7 @@ def translate_text_llm(text, prompt):
 def save_to_word(translations, output_path):
     doc = Document()
     for page_number, translation in enumerate(translations, start=1):
-        doc.add_heading(f"Page {page_number}", level=1)
+        doc.add_heading(f"Page {page_number}", level=3)
         doc.add_paragraph(translation)
     doc.save(output_path)
 
