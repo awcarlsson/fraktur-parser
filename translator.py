@@ -9,17 +9,16 @@ from openai import OpenAI
 
 openai_client = OpenAI()
 
-def extract_images(pdf_path):
+def get_images_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
-    pages = {}
+    images = []
     for page_number in range(len(doc)):
-        pages[page_number] = []
-        print(f"📸 Extracting images from page {page_number + 1}/{len(doc)}...")
+        print(f"📸 Converting to image: Page {page_number + 1}/{len(doc)}...")
         page = doc[page_number]
         pix = page.get_pixmap(dpi=300)
         image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        pages[page_number].append(image)
-    return pages
+        images.append(image)
+    return images
 
 def image_to_text(image):
     client = vision.ImageAnnotatorClient()
@@ -68,22 +67,29 @@ def save_to_word(translations, output_path):
     doc.save(output_path)
 
 def main(pdf_path, output_docx):
+    # Load GPT system prompt
     script_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(script_dir, "prompt.txt")
     prompt = ""
     with open(file_path, "r", encoding="utf-8") as file:
         prompt = file.read()
-    pages = extract_images(pdf_path)
+
+    # Get all images from the PDF
+    images = get_images_from_pdf(pdf_path)
+
+    # Extract all text from images
+    extracted_text_pages = []
+    for i in range(len(images)):
+        print(f"👁️ Analyzing image and extracting text: Page {i + 1}/{len(images)}...")
+        extracted_text_pages.append(image_to_text(images[i]))
+    
     translations = []
-    for page_number in range(len(pages)):
-        images = pages[page_number]
-        print(f"📝 Translating page {page_number + 1}/{len(pages)}...")
+    for page_number in range(len(extracted_text_pages)):
+        print(f"💭 Translating page {page_number + 1}/{len(extracted_text_pages)}...")
         page_translation = ""
-        for idx, image in enumerate(images):
-            extracted_text = image_to_text(image)
-            translated_text = translate_text_llm(extracted_text, prompt)
-            if translated_text != "":
-                page_translation += translated_text
+        translated_text = translate_text_llm(extracted_text_pages[page_number], prompt)
+        if translated_text != "":
+            page_translation += translated_text
         translations.append(page_translation)
     save_to_word(translations, output_docx)
     print(f"✅ Success! Translated document saved to {output_docx}")
